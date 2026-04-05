@@ -12,6 +12,5 @@ namespace AirportControlTower.Application.Services.Interfaces
     {
         Task<bool> UpdateLocation(string callSign, LocationDto dto);
         Task<bool> RequestStateChange(string callSign, string state);
-        Task<Weather?> GetLatestWeather();
     }
 }
