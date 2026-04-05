@@ -9,14 +9,12 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddScoped<IAircraftService, AircraftService>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IAircraftRepository, EfAircraftRepository>();
 
@@ -24,6 +22,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IGroundCrewService, GroundCrewService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IWeatherService, WeatherService>();
+builder.Services.AddScoped<DbInitializer>();
+builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
 builder.Services.AddHostedService<GroundCrewWorker>();
 builder.Services.Configure<AirportSettings>(
@@ -34,7 +34,11 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    await DbInitializer.Seed(db);
+
+    await db.Database.MigrateAsync();
+
+    var seeder = scope.ServiceProvider.GetRequiredService<DbInitializer>();
+    await seeder.SeedAsync();
 }
 
 // Configure the HTTP request pipeline.
@@ -53,5 +57,5 @@ app.MapControllers();
 app.Run();
 
 
-{ /*  */}
+{ /* continue at final fixes */}
 

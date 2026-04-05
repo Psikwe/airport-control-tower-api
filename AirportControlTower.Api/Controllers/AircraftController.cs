@@ -10,10 +10,12 @@ namespace AirportControlTower.Api.Controllers
     public class AircraftController : ControllerBase
     {
         private readonly IAircraftService _service;
+        private readonly IAuthorizationService _auth;
 
-        public AircraftController(IAircraftService service)
+        public AircraftController(IAircraftService service, IAuthorizationService auth)
         {
             _service = service;
+            _auth = auth;
         }
 
         [HttpPut("location")]
@@ -21,6 +23,9 @@ namespace AirportControlTower.Api.Controllers
             string callSign,
             [FromBody] LocationDto dto)
         {
+            var key = Request.Headers["X-Aircraft-Key"].FirstOrDefault();
+            if (!_auth.Validate(callSign, key))
+                return Unauthorized();
             var result = await _service.UpdateLocation(callSign, dto);
 
             return result ? NoContent() : BadRequest();
@@ -31,6 +36,9 @@ namespace AirportControlTower.Api.Controllers
             string callSign,
             [FromBody] IntentDto dto)
         {
+            var key = Request.Headers["X-Aircraft-Key"].FirstOrDefault();
+            if (!_auth.Validate(callSign, key))
+                return Unauthorized();
             var result = await _service.RequestStateChange(callSign, dto.State);
             if (string.IsNullOrWhiteSpace(dto.State))
                 return BadRequest("State is required");

@@ -47,4 +47,9 @@ public class AdminService : IAdminService
             weather
         };
     }
+
+    public async Task<List<ParkingSpot>> GetParkingOverview()
+    {
+        return await _repo.GetParkingSpots();
+    }
 }

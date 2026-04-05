@@ -14,5 +14,6 @@ namespace AirportControlTower.Application.Services.Interfaces
         Task<List<Aircraft>> GetAllAircraft();
         Task<Aircraft?> GetAircraft(string callSign);
         Task<object> GetDashboard();
+        Task<List<ParkingSpot>> GetParkingOverview();
     }
 }

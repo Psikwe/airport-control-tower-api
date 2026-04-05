@@ -1,5 +1,7 @@
 ﻿using AirportControlTower.Domain.Entities;
+using AirportControlTower.Shared.Configs;
 using AirportControlTower.Shared.Constants;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,32 +10,45 @@ using System.Threading.Tasks;
 
 namespace AirportControlTower.Infrastructure.Data
 {
-    public static class DbInitializer
+    public class DbInitializer
     {
-        public static async Task Seed(ApplicationDbContext context)
+        private readonly ApplicationDbContext _context;
+        private readonly AirportSettings _settings;
+
+        public DbInitializer(
+            ApplicationDbContext context,
+            IOptions<AirportSettings> settings)
         {
-            if (context.ParkingSpots.Any())
+            _context = context;
+            _settings = settings.Value;
+        }
+
+        public async Task SeedAsync()
+        {
+            if (_context.ParkingSpots.Any())
                 return;
 
-            for (int i = 0; i < 5; i++)
+            // airliner spots
+            for (int i = 0; i < _settings.AirlinerSpots; i++)
             {
-                context.ParkingSpots.Add(new ParkingSpot
+                _context.ParkingSpots.Add(new ParkingSpot
                 {
                     Type = AppConstants.AIRLINER,
                     IsOccupied = false
                 });
             }
 
-            for (int i = 0; i < 10; i++)
+            // private spots
+            for (int i = 0; i < _settings.PrivateSpots; i++)
             {
-                context.ParkingSpots.Add(new ParkingSpot
+                _context.ParkingSpots.Add(new ParkingSpot
                 {
                     Type = AppConstants.PRIVATE,
                     IsOccupied = false
                 });
             }
 
-            await context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
         }
     }
 }

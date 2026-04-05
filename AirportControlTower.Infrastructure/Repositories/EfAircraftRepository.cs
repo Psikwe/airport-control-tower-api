@@ -2,8 +2,10 @@
 using AirportControlTower.Domain.Entities;
 using AirportControlTower.Domain.Enums;
 using AirportControlTower.Infrastructure.Data;
+using AirportControlTower.Shared.Configs;
 using AirportControlTower.Shared.Constants;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,10 +17,12 @@ namespace AirportControlTower.Infrastructure.Repositories
     public class EfAircraftRepository : IAircraftRepository
     {
         private readonly ApplicationDbContext _context;
+        private readonly AirportSettings _settings;
 
-        public EfAircraftRepository(ApplicationDbContext context)
+        public EfAircraftRepository(ApplicationDbContext context, IOptions<AirportSettings> settings)
         {
             _context = context;
+            _settings = settings.Value;
         }
 
         public async Task<Aircraft?> GetByCallSign(string callSign)
@@ -66,7 +70,9 @@ namespace AirportControlTower.Infrastructure.Repositories
             int occupied = await _context.Aircraft
                 .CountAsync(a => a.State == AircraftState.PARKED && a.Type == type);
 
-            int max = type == AppConstants.AIRLINER ? 5 : 10;
+            int max = type == AppConstants.AIRLINER
+                ? _settings.AirlinerSpots
+                : _settings.PrivateSpots;
 
             return occupied < max;
         }
@@ -124,6 +130,11 @@ namespace AirportControlTower.Infrastructure.Repositories
             return await _context.Weather
                 .OrderByDescending(x => x.LastUpdated)
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<List<ParkingSpot>> GetParkingSpots()
+        {
+            return await _context.ParkingSpots.ToListAsync();
         }
     }
 }

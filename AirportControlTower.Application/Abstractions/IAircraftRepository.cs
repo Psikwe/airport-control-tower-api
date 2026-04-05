@@ -22,5 +22,6 @@ namespace AirportControlTower.Application.Abstractions
         Task AssignParking(string callSign, ParkingSpot spot);
         Task<List<Aircraft>> GetAll();
         Task<Weather?> GetLatestWeather();
+        Task<List<ParkingSpot>> GetParkingSpots();
     }
 }

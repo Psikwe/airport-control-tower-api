@@ -53,5 +53,12 @@ namespace AirportControlTower.Api.Controllers
             var data = await _service.GetDashboard();
             return Ok(data);
         }
+
+        [HttpGet("parking")]
+        public async Task<IActionResult> GetParking()
+        {
+            var result = await _service.GetParkingOverview();
+            return Ok(result);
+        }
     }
 }
