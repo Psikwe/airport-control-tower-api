@@ -32,8 +32,13 @@ namespace AirportControlTower.Api.Controllers
             [FromBody] IntentDto dto)
         {
             var result = await _service.RequestStateChange(callSign, dto.State);
+            if (string.IsNullOrWhiteSpace(dto.State))
+                return BadRequest("State is required");
 
-            return result ? NoContent() : Conflict();
+            if (!result)
+                return Conflict(new { message = "State change not allowed" });
+
+            return NoContent();
         }
     }
 }

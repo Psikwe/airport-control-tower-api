@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AirportControlTower.Application\AirportControlTower.Application.csproj" />
+    <ProjectReference Include="..\AirportControlTower.Infrastructure\AirportControlTower.Infrastructure.csproj" />
     <ProjectReference Include="..\AirportControlTower.Shared\AirportControlTower.Shared.csproj" />
   </ItemGroup>
 
