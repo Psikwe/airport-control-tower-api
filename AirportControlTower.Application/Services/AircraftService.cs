@@ -19,9 +19,6 @@ public class AircraftService : IAircraftService
         _logger = logger;
     }
 
-    // ---------------------------
-    // UPDATE LOCATION
-    // ---------------------------
     public async Task<bool> UpdateLocation(string callSign, LocationDto dto)
     {
         var aircraft = await _repo.GetByCallSign(callSign);
@@ -46,9 +43,6 @@ public class AircraftService : IAircraftService
         return true;
     }
 
-    // ---------------------------
-    // REQUEST STATE CHANGE
-    // ---------------------------
     public async Task<bool> RequestStateChange(string callSign, string state)
     {
         if (!Enum.TryParse<AircraftState>(state, out var requestedState))
@@ -59,14 +53,12 @@ public class AircraftService : IAircraftService
         if (aircraft == null)
             return false;
 
-        // 1. Validate transition
         if (!IsValidTransition(aircraft.State, requestedState))
         {
             await _repo.LogStateChange(callSign, requestedState, AppConstants.REJECTED);
             return false;
         }
 
-        // 2. Enforce constraints
         var allowed = await ValidateConstraints(aircraft, requestedState);
 
         if (!allowed)
@@ -75,7 +67,6 @@ public class AircraftService : IAircraftService
             return false;
         }
 
-        // 3. Apply state change
         aircraft.State = requestedState;
 
         await _repo.Save(aircraft);
@@ -85,9 +76,6 @@ public class AircraftService : IAircraftService
         return true;
     }
 
-    // ---------------------------
-    // STATE MACHINE
-    // ---------------------------
     private bool IsValidTransition(AircraftState current, AircraftState next)
     {
         return current switch
@@ -101,19 +89,15 @@ public class AircraftService : IAircraftService
         };
     }
 
-    // ---------------------------
-    // GLOBAL RULES
-    // ---------------------------
     private async Task<bool> ValidateConstraints(Aircraft aircraft, AircraftState requested)
     {
-        // RUNWAY RULE
+        
         if (requested == AircraftState.TAKE_OFF || requested == AircraftState.LANDED)
         {
             var runwayOccupied = await _repo.IsRunwayOccupied();
             if (runwayOccupied) return false;
         }
 
-        // APPROACH RULE
         if (requested == AircraftState.APPROACH)
         {
             var runwayOccupied = await _repo.IsRunwayOccupied();

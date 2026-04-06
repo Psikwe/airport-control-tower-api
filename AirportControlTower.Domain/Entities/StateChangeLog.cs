@@ -20,5 +20,3 @@ namespace AirportControlTower.Domain.Entities
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     }
 }
-
-//continue at 1. AppConstants
