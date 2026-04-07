@@ -11,6 +11,6 @@ namespace AirportControlTower.Application.Services.Interfaces
     public interface IAircraftService
     {
         Task<bool> UpdateLocation(string callSign, LocationDto dto);
-        Task<bool> RequestStateChange(string callSign, string state);
+        Task<(bool success, string? reason)> RequestStateChange(string callSign, string state);
     }
 }

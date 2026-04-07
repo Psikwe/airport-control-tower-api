@@ -8,10 +8,15 @@ using AirportControlTower.Infrastructure.Data;
 using AirportControlTower.Infrastructure.Repositories;
 using AirportControlTower.Shared.Configs;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddScoped<IAircraftService, AircraftService>();
@@ -30,6 +35,14 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Basic Authentication (username:password)"
     });
 
+    options.AddSecurityDefinition("AircraftKey", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Name = "X-Aircraft-Key",
+        Description = "Aircraft authentication key"
+    });
+
     options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
     {
         {
@@ -39,6 +52,17 @@ builder.Services.AddSwaggerGen(options =>
                 {
                     Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
                     Id = "basic"
+                }
+            },
+            new string[] {}
+        },
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "AircraftKey"
                 }
             },
             new string[] {}

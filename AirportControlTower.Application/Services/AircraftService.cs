@@ -11,11 +11,14 @@ namespace AirportControlTower.Application.Services;
 public class AircraftService : IAircraftService
 {
     private readonly IAircraftRepository _repo;
+    private readonly IWeatherService _weatherService;
     private readonly ILogger<AircraftService> _logger;
 
-    public AircraftService(IAircraftRepository repo, ILogger<AircraftService> logger)
+    public AircraftService(IAircraftRepository repo, IWeatherService weatherService,
+        ILogger<AircraftService> logger)
     {
         _repo = repo;
+        _weatherService = weatherService;
         _logger = logger;
     }
 
@@ -43,28 +46,29 @@ public class AircraftService : IAircraftService
         return true;
     }
 
-    public async Task<bool> RequestStateChange(string callSign, string state)
+    public async Task<(bool success, string? reason)> RequestStateChange(string callSign, string state)
     {
         if (!Enum.TryParse<AircraftState>(state, out var requestedState))
-            return false;
+            return (false, "Invalid state");
 
         var aircraft = await _repo.GetByCallSign(callSign);
 
         if (aircraft == null)
-            return false;
+            return (false, "Aircraft not found");
 
         if (!IsValidTransition(aircraft.State, requestedState))
         {
+            var reason = $"Invalid transition: {aircraft.State} → {requestedState}";
             await _repo.LogStateChange(callSign, requestedState, AppConstants.REJECTED);
-            return false;
+            return (false, reason);
         }
 
-        var allowed = await ValidateConstraints(aircraft, requestedState);
+        var (allowed, reasonMsg) = await ValidateConstraints(aircraft, requestedState);
 
         if (!allowed)
         {
             await _repo.LogStateChange(callSign, requestedState, AppConstants.REJECTED);
-            return false;
+            return (false, reasonMsg);
         }
 
         aircraft.State = requestedState;
@@ -73,7 +77,7 @@ public class AircraftService : IAircraftService
 
         await _repo.LogStateChange(callSign, requestedState, AppConstants.ACCEPTED);
 
-        return true;
+        return (true, null);
     }
 
     private bool IsValidTransition(AircraftState current, AircraftState next)
@@ -89,27 +93,62 @@ public class AircraftService : IAircraftService
         };
     }
 
-    private async Task<bool> ValidateConstraints(Aircraft aircraft, AircraftState requested)
+    private async Task<(bool allowed, string? reason)> ValidateConstraints(Aircraft aircraft, AircraftState requested)
     {
-        
+        var weather = await _weatherService.GetLatestWeather();
+
+        if (weather != null)
+        {
+            if (requested == AircraftState.APPROACH)
+            {
+                if (weather.Wind.Speed > 10)
+                {
+                    var reason = "Landing denied: unsafe wind";
+                    _logger.LogWarning("{Reason} for {CallSign}", reason, aircraft.CallSign);
+                    return (false, reason);
+                }
+
+                if (weather.Visibility < 3000)
+                {
+                    var reason = "Landing denied: low visibility";
+                    _logger.LogWarning("{Reason} for {CallSign}", reason, aircraft.CallSign);
+                    return (false, reason);
+                }
+            }
+
+            if (requested == AircraftState.TAKE_OFF)
+            {
+                if (weather.Wind.Speed > 20)
+                {
+                    var reason = "Takeoff denied: unsafe wind";
+                    _logger.LogWarning("{Reason} for {CallSign}", reason, aircraft.CallSign);
+                    return (false, reason);
+                }
+            }
+        }
+
         if (requested == AircraftState.TAKE_OFF || requested == AircraftState.LANDED)
         {
             var runwayOccupied = await _repo.IsRunwayOccupied();
-            if (runwayOccupied) return false;
+            if (runwayOccupied)
+                return (false, "Runway is currently occupied");
         }
 
         if (requested == AircraftState.APPROACH)
         {
             var runwayOccupied = await _repo.IsRunwayOccupied();
-            if (runwayOccupied) return false;
+            if (runwayOccupied)
+                return (false, "Runway is occupied");
 
             var approachExists = await _repo.IsAnyAircraftOnApproach();
-            if (approachExists) return false;
+            if (approachExists)
+                return (false, "Another aircraft is already on approach");
 
             var hasParking = await _repo.HasAvailableParking(aircraft.Type);
-            if (!hasParking) return false;
+            if (!hasParking)
+                return (false, "No parking available for this aircraft type");
         }
 
-        return true;
+        return (true, null);
     }
 }

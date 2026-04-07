@@ -1,4 +1,5 @@
 ﻿using AirportControlTower.Application.Services.Interfaces;
+using AirportControlTower.Shared.DTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,7 +7,7 @@ namespace AirportControlTower.Api.Controllers
 {
 
     [ApiController]
-    [Route("api/public/{callSign}")]
+    [Route("api/public")]
     public class PublicController : ControllerBase
     {
         private readonly IWeatherService _weatherService;
@@ -16,13 +17,21 @@ namespace AirportControlTower.Api.Controllers
             _weatherService = weatherService;
         }
 
-        [HttpGet("weather")]
-        public async Task<IActionResult> GetWeather(string callSign)
+        [HttpGet("{callSign}/weather")]
+        public async Task<IActionResult> GetWeather([FromRoute] string callSign)
         {
             var weather = await _weatherService.GetLatestWeather();
 
             if (weather == null)
-                return NotFound();
+            {
+                return Ok(new WeatherDto
+                {
+                    Description = "No data",
+                    Temperature = 0,
+                    Visibility = 0,
+                    LastUpdate = DateTime.UtcNow
+                });
+            }
 
             return Ok(weather);
         }

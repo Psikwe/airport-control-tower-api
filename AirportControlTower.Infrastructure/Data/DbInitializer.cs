@@ -25,30 +25,62 @@ namespace AirportControlTower.Infrastructure.Data
 
         public async Task SeedAsync()
         {
-            if (_context.ParkingSpots.Any())
-                return;
-
-            // airliner spots
-            for (int i = 0; i < _settings.AirlinerSpots; i++)
+            if (!_context.ParkingSpots.Any())
             {
-                _context.ParkingSpots.Add(new ParkingSpot
+                for (int i = 0; i < _settings.AirlinerSpots; i++)
                 {
-                    Type = AppConstants.AIRLINER,
-                    IsOccupied = false
-                });
+                    _context.ParkingSpots.Add(new ParkingSpot
+                    {
+                        Type = AppConstants.AIRLINER,
+                        IsOccupied = false
+                    });
+                }
+
+                for (int i = 0; i < _settings.PrivateSpots; i++)
+                {
+                    _context.ParkingSpots.Add(new ParkingSpot
+                    {
+                        Type = AppConstants.PRIVATE,
+                        IsOccupied = false
+                    });
+                }
+
+                Console.WriteLine("✅ Parking seeded");
             }
 
-            // private spots
-            for (int i = 0; i < _settings.PrivateSpots; i++)
+            if (!_context.Weather.Any())
             {
-                _context.ParkingSpots.Add(new ParkingSpot
-                {
-                    Type = AppConstants.PRIVATE,
-                    IsOccupied = false
-                });
-            }
+                Console.WriteLine("🔥 Seeding Weather...");
 
-            await _context.SaveChangesAsync();
+                _context.Weather.AddRange(
+                    new Weather
+                    {
+                        Description = "clear sky",
+                        Temperature = 25,
+                        Visibility = 10000,
+                        WindSpeed = 3,
+                        WindDeg = 180,
+                        LastUpdated = DateTime.UtcNow.AddMinutes(-10)
+                    },
+                    new Weather
+                    {
+                        Description = "heavy rain",
+                        Temperature = 20,
+                        Visibility = 2000,
+                        WindSpeed = 15,
+                        WindDeg = 250,
+                        LastUpdated = DateTime.UtcNow
+                    }
+                );
+
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine("🔥 Weather seeded count: " + _context.Weather.Count());
+            }
+            else
+            {
+                Console.WriteLine("⚠️ Weather already exists, skipping...");
+            }
         }
     }
 }

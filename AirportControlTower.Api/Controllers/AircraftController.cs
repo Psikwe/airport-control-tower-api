@@ -38,13 +38,15 @@ namespace AirportControlTower.Api.Controllers
         {
             var key = Request.Headers["X-Aircraft-Key"].FirstOrDefault();
             if (!_auth.Validate(callSign, key))
-                return Unauthorized();
-            var result = await _service.RequestStateChange(callSign, dto.State);
+                return Unauthorized(); 
+            
             if (string.IsNullOrWhiteSpace(dto.State))
                 return BadRequest("State is required");
 
-            if (!result)
-                return Conflict(new { message = "State change not allowed" });
+            var (success, reason) = await _service.RequestStateChange(callSign, dto.State);
+
+            if (!success)
+                return Conflict(new { message = reason });
 
             return NoContent();
         }
