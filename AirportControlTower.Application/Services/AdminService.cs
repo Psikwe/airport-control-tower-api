@@ -40,11 +40,13 @@ public class AdminService : IAdminService
         var logs = await _repo.GetLast10Logs();
         var weather = await _repo.GetLatestWeather();
 
+        var parking = await _repo.GetParkingSpots();
         return new
         {
             aircraftCount = aircraft.Count,
             lastLogs = logs,
-            weather
+            weather,
+            parking
         };
     }
 
