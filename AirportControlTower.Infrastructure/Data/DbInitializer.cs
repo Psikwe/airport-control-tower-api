@@ -45,12 +45,12 @@ namespace AirportControlTower.Infrastructure.Data
                     });
                 }
 
-                Console.WriteLine("✅ Parking seeded");
+                Console.WriteLine("Parking seeded");
             }
 
             if (!_context.Weather.Any())
             {
-                Console.WriteLine("🔥 Seeding Weather...");
+                Console.WriteLine("Seeding Weather...");
 
                 _context.Weather.AddRange(
                     new Weather
@@ -75,11 +75,11 @@ namespace AirportControlTower.Infrastructure.Data
 
                 await _context.SaveChangesAsync();
 
-                Console.WriteLine("🔥 Weather seeded count: " + _context.Weather.Count());
+                Console.WriteLine("Weather seeded count: " + _context.Weather.Count());
             }
             else
             {
-                Console.WriteLine("⚠️ Weather already exists, skipping...");
+                Console.WriteLine("Weather already exists, skipping...");
             }
         }
     }
