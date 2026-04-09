@@ -1,0 +1,29 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: AirportControlTower.Api/Dockerfile
+    container_name: airport-api
+    ports:
+      - "5000:8080"
+    depends_on:
+      - postgres
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=airport_control_tower_db;Username=postgres;Password=KAKAY1212?!?@db"
+
+  postgres:
+    image: postgres:15
+    container_name: airport-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: airport_control_tower_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "KAKAY1212?!?@db"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:
